@@ -1,53 +1,63 @@
-var canvas;
-var hcanvas, position, database;
+var canavs;
+var database;
+
+var drawing = []
 
 function setup() {
-  //   database = firebase.database();
-  database = firebase.database();
-  createCanvas(500, 500);
-  canvas = createSprite(1200, 800);
-  canvas.shapeColor = "lightpink";
-  var canvas = database.ref("Painting canvas/position");
-  canvas.on("value", readPosition, showError);
+    canvas = createCanvas(400, 400);
+    canvas.parent('canvascontainer');
+    database = firebase.database()
+    background(51)
+    var clearbutton = select('#clearbutton');
+
+    clearbutton.mousePressed(clearDrawing)
+
+}
+
+var db_drawing = []
+
+function mouseDragged() {
+
+    var point = {
+        x: mouseX,
+        y: mouseY
+    }
+    drawing.push(point);
+    var drawingRef = database.ref('drawing')
+    drawingRef.set({
+        "d": drawing
+    })
 }
 
 function draw() {
-  background("white");
-  // if (position !== undefined) {
-  //   if (keyDown(LEFT_ARROW)) {
-  //     writePosition(-1, 0);
-  //   } else if (keyDown(RIGHT_ARROW)) {
-  //     writePosition(1, 0);
-  //   } else if (keyDown(UP_ARROW)) {
-  //     writePosition(0, -1);
-  //   } else if (keyDown(DOWN_ARROW)) {
-  //     writePosition(0, +1);
-  //   }
-  // }
-  drawSprites();
+    readData()
+    beginShape();
+    stroke(255);
+    strokeWeight(4);
+    noFill();
+    for (var i = 0; i < db_drawing.length; i++) {
+        vertex(db_drawing[i].x, db_drawing[i].y);
+        endShape();
+    }
+
 }
 
-function mouseDragged() {
-  line(mouseX, mouseX, mouseY, mouseY);
+function readData() {
+    database.ref('drawing/').on('value', (data) => {
+        db_drawing = data.val().d
+    })
 }
 
-function mouseReleased() {}
-// function changePosition(x, y) {
-// canvas.x = canvas.x + x;
-// canvas.y = canvas.y + y;
+// function clearDrawing() {
+//     db_drawing = []
+//     var drawingRef = database.ref('drawing')
+//     drawingRef.set({
+//         "d": []
+//     })
 // }
 
-function writePosition(x, y) {
-  database
-    .ref("Painting canvas/position")
-    .set({ x: position.x + x, y: position.y + y });
-}
-function readPosition(data) {
-  position = data.val();
-  console.log(position.x);
-  canvas.x = position.x;
-  canvas.y = position.y;
-}
-function showError() {
-  console.log("Error in writing to the database");
+function clearDrawing() {
+    db_drawing = [];
+    var adaRef = database.ref('drawing');
+    adaRef.remove()
 }
